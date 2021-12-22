@@ -20,9 +20,6 @@ int main(int argc, char** args) {
 		std::cout << "Error creating renderer: " << SDL_GetError() << std::endl;
 	}
 
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 127);
-	SDL_RenderClear(renderer);
-
 	if (TTF_Init() < 0) {
 		std::cout << "Error initialising SDL_ttf: " << TTF_GetError() << std::endl;
 	}
@@ -39,14 +36,27 @@ int main(int argc, char** args) {
 		std::cout << "Failed to render text: " << TTF_GetError() << std::endl;
 	}
 
+	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 127);
+	SDL_RenderClear(renderer);
+
 	SDL_Texture* textTexture;
 	textTexture = SDL_CreateTextureFromSurface(renderer, text);
-	if (text) {
-		SDL_Rect dest = { 0, 0, text->w, text->h };
-		SDL_RenderCopy(renderer, textTexture, nullptr, &dest);
-	}
 
-	SDL_RenderPresent(renderer);
+	bool quit = false;
+	int x = 0;
+	while (!quit) {
+		SDL_RenderClear(renderer);
+
+		int dx = 10;
+		if (text) {
+			SDL_Rect dest = { x, 0, text->w, text->h };
+			SDL_RenderCopy(renderer, textTexture, nullptr, &dest);
+		}
+		SDL_Delay(10);
+		x += dx;
+
+		SDL_RenderPresent(renderer);
+	}
 
 
 
