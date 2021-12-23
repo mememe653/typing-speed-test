@@ -1,6 +1,11 @@
 #include <iostream>
+#include <vector>
+#include <cstdlib>
 #include <SDL.h>
 #include <SDL_ttf.h>
+
+int SCREEN_WIDTH = 1280;
+int SCREEN_HEIGHT = 720;
 
 bool init(SDL_Surface**, SDL_Window**);
 
@@ -38,17 +43,61 @@ public:
 		SDL_Surface* text = TTF_RenderText_Solid(font, word, color);
 		SDL_Texture* textTexture;
 		textTexture = SDL_CreateTextureFromSurface(renderer, text);
-		SDL_Rect dest = { x, 0, text->w, text->h };
+		SDL_Rect dest = { x, y, text->w, text->h };
 		SDL_RenderCopy(renderer, textTexture, nullptr, &dest);
 	}
 
 	void incrementX(int dx) {
 		this->x += dx;
 	}
+
+	int getX() const {
+		return this->x;
+	}
+
+	int getY() const {
+		return this->y;
+	}
+
+	int getWidth() const {
+		return this->w;
+	}
+
+	int getHeight() const {
+		return this->h;
+	}
+};
+
+
+class WordGenerator {
+private:
+	TTF_Font* font;
+	SDL_Color color;
+
+public:
+	WordGenerator(TTF_Font* font, const SDL_Color& color)
+		: font(font), color(color) {
+
+	}
+
+	void generate(std::vector<Word>& words) {
+		Word newWord("hello", rand() % SCREEN_HEIGHT, font, color);
+		for (Word& word : words) {
+			if ((newWord.getX() + newWord.getWidth()) > word.getX()) {
+				if (newWord.getY() < (word.getY() + word.getHeight())
+					&& (newWord.getY() + newWord.getHeight()) > word.getY()) {
+					return;
+				}
+			}
+		}
+		words.push_back(newWord);
+	}
 };
 
 
 int main(int argc, char** args) {
+
+	srand(time(NULL));
 
 	SDL_Surface* winSurface = nullptr;
 	SDL_Window* window = nullptr;
@@ -80,21 +129,37 @@ int main(int argc, char** args) {
 	bool quit = false;
 	int x = 0;
 	SDL_Color wordColor = { 255, 255, 0 };
-	Word word("hello", 0, font, wordColor);
 	SDL_Event e;
+
+	WordGenerator wordGenerator(font, wordColor);
+	std::vector<Word> words;
+
+	int generateCounter = 10;
 	while (!quit) {
+		if (generateCounter == 0) {
+			generateCounter = 10;
+			wordGenerator.generate(words);
+		}
 		if (SDL_PollEvent(&e)) {
 			if (e.type == SDL_KEYDOWN) {
-				word.writeNextLetter(e.key.keysym.sym);
+				for (Word& word : words) {
+					word.writeNextLetter(e.key.keysym.sym);
+				}
 			}
 		}
 		SDL_RenderClear(renderer);
-		if (!word.completed()) {
-			word.render(renderer);
-			word.incrementX(1);
+		for (int i = 0; i < words.size(); i++) {
+			if (words[i].completed()) {
+				words.erase(words.begin() + i);
+			}
+			else {
+				words[i].render(renderer);
+				words[i].incrementX(1);
+			}
 		}
 		SDL_RenderPresent(renderer);
 		SDL_Delay(10);
+		generateCounter--;
 	}
 
 	system("pause");
@@ -114,7 +179,7 @@ bool init(SDL_Surface** surface, SDL_Window** window) {
 		return false;
 	}
 
-	*window = SDL_CreateWindow("Typing Speed Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_SHOWN);
+	*window = SDL_CreateWindow("Typing Speed Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
 	if (!*window) {
 		std::cout << "Error creating window: " << SDL_GetError() << std::endl;
