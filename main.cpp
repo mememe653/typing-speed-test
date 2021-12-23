@@ -4,6 +4,50 @@
 
 bool init(SDL_Surface**, SDL_Window**);
 
+
+class Word {
+private:
+	const char* word;
+	int x, y, w, h;
+	TTF_Font* font;
+	SDL_Color color;
+	int idx = 0;
+
+public:
+	Word(const char* word, int y, TTF_Font* font, SDL_Color color) : word(word), x(0), y(y), font(font), color(color) {
+		SDL_Surface* text = TTF_RenderText_Solid(font, word, color);
+		this->w = text->w;
+		this->h = text->h;
+	}
+
+	void writeNextLetter(char letter) {
+		if (word[idx] == letter) {
+			color = { 255, 0, 0 };
+			idx++;
+		} else {
+			idx = 0;
+			color = { 255, 255, 0 };
+		}
+	}
+
+	bool completed() {
+		return idx >= strlen(word);
+	}
+
+	void render(SDL_Renderer* renderer) {
+		SDL_Surface* text = TTF_RenderText_Solid(font, word, color);
+		SDL_Texture* textTexture;
+		textTexture = SDL_CreateTextureFromSurface(renderer, text);
+		SDL_Rect dest = { x, 0, text->w, text->h };
+		SDL_RenderCopy(renderer, textTexture, nullptr, &dest);
+	}
+
+	void incrementX(int dx) {
+		this->x += dx;
+	}
+};
+
+
 int main(int argc, char** args) {
 
 	SDL_Surface* winSurface = nullptr;
@@ -30,36 +74,28 @@ int main(int argc, char** args) {
 		std::cout << "Failed to load font: " << TTF_GetError() << std::endl;
 	}
 
-	SDL_Color color = { 255, 0, 0 };
-	SDL_Surface* text = TTF_RenderText_Solid(font, "Hello World!", color);
-	if (!text) {
-		std::cout << "Failed to render text: " << TTF_GetError() << std::endl;
-	}
-
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 127);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
-
-	SDL_Texture* textTexture;
-	textTexture = SDL_CreateTextureFromSurface(renderer, text);
 
 	bool quit = false;
 	int x = 0;
+	SDL_Color wordColor = { 255, 255, 0 };
+	Word word("hello", 0, font, wordColor);
+	SDL_Event e;
 	while (!quit) {
-		SDL_RenderClear(renderer);
-
-		int dx = 10;
-		if (text) {
-			SDL_Rect dest = { x, 0, text->w, text->h };
-			SDL_RenderCopy(renderer, textTexture, nullptr, &dest);
+		if (SDL_PollEvent(&e)) {
+			if (e.type == SDL_KEYDOWN) {
+				word.writeNextLetter(e.key.keysym.sym);
+			}
 		}
-		SDL_Delay(10);
-		x += dx;
-
+		SDL_RenderClear(renderer);
+		if (!word.completed()) {
+			word.render(renderer);
+			word.incrementX(1);
+		}
 		SDL_RenderPresent(renderer);
+		SDL_Delay(10);
 	}
-
-
-
 
 	system("pause");
 
