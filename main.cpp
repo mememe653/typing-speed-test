@@ -28,13 +28,15 @@ public:
 		this->h = text->h;
 	}
 
-	void writeNextLetter(char letter) {
+	bool writeNextLetter(char letter) {
 		if (word[idx] == letter) {
 			color = { 255, 0, 0 };
 			idx++;
+			return true;
 		} else {
 			idx = 0;
 			color = { 255, 255, 0 };
+			return false;
 		}
 	}
 
@@ -156,7 +158,10 @@ int main(int argc, char** args) {
 		if (SDL_PollEvent(&e)) {
 			if (e.type == SDL_KEYDOWN) {
 				for (Word& word : words) {
-					word.writeNextLetter(e.key.keysym.sym);
+					bool success = word.writeNextLetter(e.key.keysym.sym);
+					if (success) {
+						break;
+					}
 				}
 			}
 		}
