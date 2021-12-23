@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <chrono>
 #include <cstdlib>
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -142,6 +143,8 @@ int main(int argc, char** args) {
 	std::vector<Word> words;
 
 	int generateCounter = 10;
+	int wordCount = 0;
+	auto startTime = std::chrono::high_resolution_clock::now();
 	while (!quit) {
 		if (generateCounter == 0) {
 			generateCounter = 10;
@@ -158,6 +161,7 @@ int main(int argc, char** args) {
 		for (int i = 0; i < words.size(); i++) {
 			if (words[i].completed()) {
 				words.erase(words.begin() + i);
+				wordCount++;
 			}
 			else {
 				words[i].render(renderer);
@@ -171,6 +175,20 @@ int main(int argc, char** args) {
 		SDL_Delay(10);
 		generateCounter--;
 	}
+
+	auto endTime = std::chrono::high_resolution_clock::now();
+	auto time = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+	int wpm = wordCount * 1000 * 60 / time;
+
+	SDL_RenderClear(renderer);
+	std::string gameOverMessage = std::string("Typing speed: ") + std::to_string(wpm) + " wpm";
+	SDL_Color gameOverColor = { 255, 255, 0 };
+	SDL_Surface* text = TTF_RenderText_Solid(font, gameOverMessage.c_str(), gameOverColor);
+	SDL_Texture* textTexture;
+	textTexture = SDL_CreateTextureFromSurface(renderer, text);
+	SDL_Rect dest = { 0, 0, text->w, text->h };
+	SDL_RenderCopy(renderer, textTexture, nullptr, &dest);
+	SDL_RenderPresent(renderer);
 
 	system("pause");
 
