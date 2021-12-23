@@ -162,6 +162,9 @@ int main(int argc, char** args) {
 			else {
 				words[i].render(renderer);
 				words[i].incrementX(1);
+				if ((words[i].getX() + words[i].getWidth()) > SCREEN_WIDTH) {
+					quit = true;
+				}
 			}
 		}
 		SDL_RenderPresent(renderer);
