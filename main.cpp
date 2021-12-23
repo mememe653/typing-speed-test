@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <vector>
 #include <cstdlib>
 #include <SDL.h>
@@ -73,15 +75,20 @@ class WordGenerator {
 private:
 	TTF_Font* font;
 	SDL_Color color;
+	std::string* possibleWords;
 
 public:
 	WordGenerator(TTF_Font* font, const SDL_Color& color)
 		: font(font), color(color) {
-
+		std::ifstream wordsFile("resources\\english_words.txt");
+		possibleWords = new std::string[3000];
+		for (int i = 0; i < 3000; i++) {
+			std::getline(wordsFile, possibleWords[i]);
+		}
 	}
 
 	void generate(std::vector<Word>& words) {
-		Word newWord("hello", rand() % SCREEN_HEIGHT, font, color);
+		Word newWord(possibleWords[rand() % 3000].c_str(), rand() % SCREEN_HEIGHT, font, color);
 		for (Word& word : words) {
 			if ((newWord.getX() + newWord.getWidth()) > word.getX()) {
 				if (newWord.getY() < (word.getY() + word.getHeight())
