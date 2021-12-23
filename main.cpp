@@ -98,7 +98,9 @@ public:
 				}
 			}
 		}
-		words.push_back(newWord);
+		if ((newWord.getY() + newWord.getHeight()) < SCREEN_HEIGHT) {
+			words.push_back(newWord);
+		}
 	}
 };
 
@@ -142,12 +144,13 @@ int main(int argc, char** args) {
 	WordGenerator wordGenerator(font, wordColor);
 	std::vector<Word> words;
 
-	int generateCounter = 10;
+	int maxCount = 100;
+	int generateCounter = maxCount;
 	int wordCount = 0;
 	auto startTime = std::chrono::high_resolution_clock::now();
 	while (!quit) {
 		if (generateCounter == 0) {
-			generateCounter = 10;
+			generateCounter = maxCount > 10 ? maxCount-- : 10;
 			wordGenerator.generate(words);
 		}
 		if (SDL_PollEvent(&e)) {
